@@ -1,12 +1,10 @@
-# just a platformer
+# just a platformer multiplayer
 
-An attempt from me to create a platformer.
+Just a platformer but with the fun of altitorture.
 
 ## Play It
 
-- [Main Game](https://thetastypi.github.io/just-a-platformer/index.html)
-- [On CoolMathGames](https://www.coolmathgames.com/0-just-a-platformer)
-- [Level Editor](https://thetastypi.github.io/just-a-platformer/levelEditor/index.html)
+- [Main Game](https://discordiann.github.io/just-a-platformer-multiplayer/index.html)
 
 ## Credits
 
