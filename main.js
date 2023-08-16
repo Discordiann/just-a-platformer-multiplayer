@@ -1528,6 +1528,23 @@ function nextFrame(timeStamp) {
       }
     }
     dt = dt * simReruns;
+    // rope physics
+    let ropex = player1.x - player2.x;
+    let ropey = player1.y - player2.y;
+    if (onFloor1) {
+      player1.x -= Math.max(Math.pow(Math.abs(ropex), 1.1) * Math.sign(ropex) - player1.g / 2, 0) / 100;
+      player1.y += Math.max(Math.pow(Math.abs(ropey), 1.1) * Math.sign(ropey) - player1.g / 2, 0) / 100;
+    } else {
+      player1.x -= Math.pow(Math.abs(ropex), 1.1) * Math.sign(ropex) / 100;
+      player1.y -= Math.pow(Math.abs(ropey), 1.1) * Math.sign(ropey) / 100;
+    }
+    if (onFloor2) {
+      player2.x += Math.max(Math.pow(Math.abs(ropex), 1.1) * Math.sign(ropex) - player2.g / 2, 0) / 100;
+      player2.y += Math.max(Math.pow(Math.abs(ropey), 1.1) * Math.sign(ropey) - player2.g / 2, 0) / 100;
+    } else {
+      player2.x += Math.pow(Math.abs(ropex), 1.1) * Math.sign(ropex) / 100;
+      player2.y += Math.pow(Math.abs(ropey), 1.1) * Math.sign(ropey) / 100;
+    }
     // key input
     if (control.left1 && player1.xv > -player1.moveSpeed) {
       player1.xv -= (player1.moveSpeed * dt) / 50 / (player1.noFriction ? 6 : 1);
@@ -1590,23 +1607,6 @@ function nextFrame(timeStamp) {
         player2.yv = -Math.sign(player2.g) * 205;
         player2.currentJumps--;
       }
-    }
-    // rope physics
-    let ropex = player1.x - player2.x;
-    let ropey = player1.y - player2.y;
-    if (onFloor1) {
-      player1.x -= Math.max(ropex - player1.g / 2, 0) / 100;
-      player1.y += Math.max(ropey - player1.g / 2, 0) / 100;
-    } else {
-      player1.x -= ropex / 100;
-      player1.y -= ropey / 100;
-    }
-    if (onFloor2) {
-      player2.x += Math.max(ropex - player2.g / 2, 0) / 100;
-      player2.y += Math.max(ropey - player2.g / 2, 0) / 100;
-    } else {
-      player2.x += ropex / 100;
-      player2.y += ropey / 100;
     }
     // draw checks
     if (player1.x != xprev1 || player1.y != yprev1) drawPlayers();
