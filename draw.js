@@ -1,26 +1,46 @@
 var playerSize = 20;
 var blockSize = 50;
-function drawPlayer() {
+function drawPlayers() {
   let canvas = id("playerLayer");
   let pL = canvas.getContext("2d");
-  canvas.width = levels[player.currentLevel].length * blockSize;
-  canvas.height = levels[player.currentLevel][0].length * blockSize;
+  canvas.width = levels[playerData.currentLevel].length * blockSize;
+  canvas.height = levels[playerData.currentLevel][0].length * blockSize;
   pL.clearRect(0, 0, canvas.width, canvas.height);
-  let ratio = player.currentJumps / player.maxJumps;
-  if (player.maxJumps === Infinity) ratio = 1;
-  if (player.maxJumps === 0) ratio = 0;
-  pL.fillStyle = `rgb(${255 - ratio * 255},0,${ratio * 255})`;
+  let ratio1 = player1.currentJumps / player1.maxJumps;
+  if (player1.maxJumps === Infinity) ratio1 = 1;
+  if (player1.maxJumps === 0) ratio1 = 0;
+  pL.fillStyle = `rgb(${255 - ratio1 * 255},0,${ratio1 * 255})`;
   if (options.darkMode)
-    pL.fillStyle = `rgb(${255 - ratio * 255 * 0.75},${255 * 0.25},${
+    pL.fillStyle = `rgb(${255 - ratio1 * 255 * 0.75},${255 * 0.25},${
       ratio * 255 * 0.75 + 255 * 0.25
     })`;
-  if (player.isDead) pL.fillStyle += "88";
+  if (playerData.isDead) pL.fillStyle += "88";
   pL.fillRect(
-    Math.floor(player.x),
-    Math.floor(player.y),
+    Math.floor(player1.x),
+    Math.floor(player1.y),
     playerSize,
     playerSize
   );
+  let ratio2 = player2.currentJumps / player2.maxJumps;
+  if (player2.maxJumps === Infinity) ratio2 = 1;
+  if (player2.maxJumps === 0) ratio2 = 0;
+  pL.fillStyle = `rgb(${255 - ratio2 * 255},0,${ratio2 * 255})`;
+  if (options.darkMode)
+    pL.fillStyle = `rgb(${255 - ratio2 * 255 * 0.75},${255 * 0.25},${
+      ratio * 255 * 0.75 + 255 * 0.25
+    })`;
+  if (playerData.isDead) pL.fillStyle += "88";
+  pL.fillRect(
+    Math.floor(player2.x),
+    Math.floor(player2.y),
+    playerSize,
+    playerSize
+  );
+  pL.strokeStyle = "#A36035";
+  pL.beginPath();
+  pL.moveTo(player1.x + playerSize / 2, player1.y + playerSize / 2);
+  pL.lineTo(player2.x + playerSize / 2, player2.y + playerSize / 2);
+  pL.stroke();
   adjustScreen();
 }
 
@@ -48,15 +68,15 @@ function drawLevel() {
   let lL = canvas.getContext("2d");
   let bcanv = id("bgLayer");
   let bL = id("bgLayer").getContext("2d");
-  canvas.width = levels[player.currentLevel].length * blockSize;
-  canvas.height = levels[player.currentLevel][0].length * blockSize;
-  bcanv.width = levels[player.currentLevel].length * blockSize;
-  bcanv.height = levels[player.currentLevel][0].length * blockSize;
+  canvas.width = levels[playerData.currentLevel].length * blockSize;
+  canvas.height = levels[playerData.currentLevel][0].length * blockSize;
+  bcanv.width = levels[playerData.currentLevel].length * blockSize;
+  bcanv.height = levels[playerData.currentLevel][0].length * blockSize;
   lL.clearRect(0, 0, canvas.width, canvas.height);
   bL.clearRect(0, 0, canvas.width, canvas.height);
   bL.fillStyle = "#FFFFFF";
-  for (let x in levels[player.currentLevel]) {
-    for (let y in levels[player.currentLevel][x]) {
+  for (let x in levels[playerData.currentLevel]) {
+    for (let y in levels[playerData.currentLevel][x]) {
       lL.lineWidth = (blockSize * 3) / 25;
       let xb = x * blockSize;
       let yb = y * blockSize;
@@ -73,7 +93,7 @@ function drawLevel() {
           lL.fillStyle = "#00FF0088";
           break;
         case -3:
-          if (!player.triggers.includes(props[1])) {
+          if (!playerData.triggers.includes(props[1])) {
             lL.fillStyle = "#00880088";
           } else lL.fillStyle = "#00FF0088";
           break;
@@ -179,7 +199,7 @@ function drawLevel() {
           break;
         case -3:
           lL.lineWidth = blockSize / 25;
-          if (!player.triggers.includes(props[1])) {
+          if (!playerData.triggers.includes(props[1])) {
             lL.strokeStyle = "#00440088";
             lL.fillStyle = "#00440088";
             lL.strokeRect(
@@ -708,34 +728,34 @@ var camy = 0;
 var camDelay = 15;
 function adjustScreen(instant = false) {
   lvlx = Math.floor(
-    (window.innerWidth - levels[player.currentLevel].length * blockSize) / 2
+    (window.innerWidth - levels[playerData.currentLevel].length * blockSize) / 2
   );
   if (lvlx < 0) {
     lvlx =
-      Math.floor(window.innerWidth / 2) - Math.floor(player.x + playerSize / 2);
+      Math.floor(window.innerWidth / 2) - Math.floor(((player1.x + playerSize / 2) + (player2.x + playerSize / 2)) / 2);
     if (lvlx > 0) lvlx = 0;
     if (
       lvlx <
-      window.innerWidth - levels[player.currentLevel].length * blockSize
+      window.innerWidth - levels[playerData.currentLevel].length * blockSize
     )
       lvlx = Math.floor(
-        window.innerWidth - levels[player.currentLevel].length * blockSize
+        window.innerWidth - levels[playerData.currentLevel].length * blockSize
       );
   }
   lvly = Math.floor(
-    (window.innerHeight - levels[player.currentLevel][0].length * blockSize) / 2
+    (window.innerHeight - levels[playerData.currentLevel][0].length * blockSize) / 2
   );
   if (lvly < 0) {
     lvly =
       Math.floor(window.innerHeight / 2) -
-      Math.floor(player.y + playerSize / 2);
+      Math.floor(((player1.y + playerSize / 2) + (player2.y + playerSize / 2)) / 2);
     if (lvly > 0) lvly = 0;
     if (
       lvly <
-      window.innerHeight - levels[player.currentLevel][0].length * blockSize
+      window.innerHeight - levels[playerData.currentLevel][0].length * blockSize
     )
       lvly = Math.floor(
-        window.innerHeight - levels[player.currentLevel][0].length * blockSize
+        window.innerHeight - levels[playerData.currentLevel][0].length * blockSize
       );
   }
   camx = (camx * (camDelay - 1) + lvlx) / camDelay;

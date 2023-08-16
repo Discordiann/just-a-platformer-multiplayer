@@ -1,24 +1,14 @@
 var currentVersion = 0.3;
 var gameSpeed = 1;
-var player = {
+var playerData = {
   spawnPoint: newSave(),
   isDead: false,
   spawnDelay: Math.floor((options.spawnDelay * 100) / 3),
   spawnTimer: Math.floor((options.spawnDelay * 100) / 3),
   levelCoord: [0, 0],
   get currentLevel() {
-    return worldMap[player.levelCoord[0]][player.levelCoord[1]];
+    return worldMap[playerData.levelCoord[0]][playerData.levelCoord[1]];
   },
-  x: 0,
-  y: 0,
-  xv: 0,
-  yv: 0,
-  g: 325,
-  canWalljump: false,
-  canJump: true,
-  currentJumps: 0,
-  maxJumps: 1,
-  moveSpeed: 600,
   triggers: [],
   godMode: false,
   reachedHub: false,
@@ -29,12 +19,42 @@ var player = {
   finalTimePlayed: 0,
   gameComplete: false
 };
+var player1 = {
+  x: 0,
+  y: 0,
+  xv: 0,
+  yv: 0,
+  g: 325,
+  canWalljump: false,
+  canJump: true,
+  currentJumps: 0,
+  maxJumps: 1,
+  moveSpeed: 600,
+  noFriction: false,
+};
+var player2 = {
+  x: 0,
+  y: 0,
+  xv: 0,
+  yv: 0,
+  g: 325,
+  canWalljump: false,
+  canJump: true,
+  currentJumps: 0,
+  maxJumps: 1,
+  moveSpeed: 600,
+  noFriction: false,
+};
 const control = {
-  left: false,
-  right: false,
-  up: false,
-  down: false,
-  space: false,
+  left1: false,
+  right1: false,
+  up1: false,
+  down1: false,
+  space1: false,
+  left2: false,
+  right2: false,
+  up2: false,
+  down2: false,
   madeFirstInput: false
 };
 const hasHitbox = [1, 5, 11, 40];
@@ -81,25 +101,25 @@ function playAudio(target) {
 }
 function updateAudio() {
   switch (true) {
-    case player.currentLevel === 8 || player.currentLevel === 9:
+    case playerData.currentLevel === 8 || playerData.currentLevel === 9:
       playAudio(music.hub);
       break;
-    case player.currentLevel >= 10 && player.currentLevel <= 27:
+    case playerData.currentLevel >= 10 && playerData.currentLevel <= 27:
       playAudio(music.grav);
       break;
-    case player.currentLevel >= 28 && player.currentLevel <= 45:
+    case playerData.currentLevel >= 28 && playerData.currentLevel <= 45:
       playAudio(music.mj);
       break;
-    case player.currentLevel >= 46 && player.currentLevel <= 64:
+    case playerData.currentLevel >= 46 && playerData.currentLevel <= 64:
       playAudio(music.wj);
       break;
-    case player.currentLevel >= 65 && player.currentLevel <= 76:
+    case playerData.currentLevel >= 65 && playerData.currentLevel <= 76:
       playAudio(music.speed);
       break;
-    case player.currentLevel >= 77 && player.currentLevel <= 87:
+    case playerData.currentLevel >= 77 && playerData.currentLevel <= 87:
       playAudio(music.final);
       break;
-    case player.currentLevel === 88:
+    case playerData.currentLevel === 88:
       playAudio(music.end);
       break;
     default:
@@ -115,27 +135,39 @@ document.addEventListener("keydown", function (input) {
   let key = input.code;
   switch (key) {
     case "ArrowUp":
+      control.up2 = true;
+      control.madeFirstInput = true;
+      break;
     case "KeyW":
-      control.up = true;
+      control.up1 = true;
       control.madeFirstInput = true;
       break;
     case "ArrowDown":
+      control.down2 = true;
+      control.madeFirstInput = true;
+      break;
     case "KeyS":
-      control.down = true;
+      control.down1 = true;
       control.madeFirstInput = true;
       break;
     case "ArrowLeft":
+      control.left2 = true;
+      control.madeFirstInput = true;
+      break;
     case "KeyA":
-      control.left = true;
+      control.left1 = true;
       control.madeFirstInput = true;
       break;
     case "ArrowRight":
+      control.right2 = true;
+      control.madeFirstInput = true;
+      break;
     case "KeyD":
-      control.right = true;
+      control.right1 = true;
       control.madeFirstInput = true;
       break;
     case "Space":
-      control.space = true;
+      control.space1 = true;
       control.madeFirstInput = true;
       break;
     case "Delete":
@@ -143,9 +175,9 @@ document.addEventListener("keydown", function (input) {
       break;
     case "KeyR":
       if (input.shiftKey) {
-        if (player.reachedHub) {
+        if (playerData.reachedHub) {
           if (confirm("Are you sure you want to go to the hub?")) {
-            player.spawnPoint = [
+            playerData.spawnPoint = [
               7,
               5,
               5,
@@ -153,22 +185,22 @@ document.addEventListener("keydown", function (input) {
               325,
               1,
               600,
-              [...player.triggers],
+              [...playerData.triggers],
               currentVersion,
               true,
-              player.timePlayed,
-              player.deaths,
-              player.gameComplete,
-              player.finalTimePlayed,
-              player.finalDeaths,
+              playerData.timePlayed,
+              playerData.deaths,
+              playerData.gameComplete,
+              playerData.finalTimePlayed,
+              playerData.finalDeaths,
               0
             ];
             respawn();
           }
         } else alert("You have not reached the hub yet.");
       } else {
-        player.isDead = true;
-        player.spawnTimer = 0;
+        playerData.isDead = true;
+        playerData.spawnTimer = 0;
       }
       break;
     case "KeyC":
@@ -188,26 +220,36 @@ document.addEventListener("keyup", function (input) {
   let key = input.code;
   switch (key) {
     case "ArrowUp":
+      control.up2 = false;
+      if (!control.down2) player2.canJump = true;
+      break;
     case "KeyW":
-      control.up = false;
-      if (!control.down && !control.space) player.canJump = true;
+      control.up1 = false;
+      if (!control.down1 && !control.space1) player1.canJump = true;
       break;
     case "ArrowDown":
+      control.down2 = false;
+      if (!control.up2) player2.canJump = true;
+      break;
     case "KeyS":
-      control.down = false;
-      if (!control.up && !control.space) player.canJump = true;
+      control.down1 = false;
+      if (!control.up1 && !control.space1) player1.canJump = true;
       break;
     case "ArrowLeft":
+      control.left2 = false;
+      break;
     case "KeyA":
-      control.left = false;
+      control.left1 = false;
       break;
     case "ArrowRight":
+      control.right2 = false;
+      break;
     case "KeyD":
-      control.right = false;
+      control.right1 = false;
       break;
     case "Space":
-      control.space = false;
-      if (!control.up && !control.down) player.canJump = true;
+      control.space1 = false;
+      if (!control.up1 && !control.down1) player1.canJump = true;
       break;
     default:
       break;
@@ -217,7 +259,6 @@ document.addEventListener("keyup", function (input) {
 var lastFrame = 0;
 var simReruns = 20;
 var sinceLastSave = 0;
-var noFriction = false;
 var branchInProgress = true;
 function nextFrame(timeStamp) {
   // setup stuff
@@ -227,17 +268,17 @@ function nextFrame(timeStamp) {
     return;
   }
   if (control.madeFirstInput) {
-    player.timePlayed += dt;
-    if (branchInProgress) player.branchTime += dt;
+    playerData.timePlayed += dt;
+    if (branchInProgress) playerData.branchTime += dt;
   }
-  player.spawnPoint[10] = player.timePlayed;
-  player.spawnPoint[15] = player.branchTime;
-  id("timePlayed").innerHTML = formatTime(player.timePlayed);
-  id("branchTime").innerHTML = formatTime(player.branchTime);
+  playerData.spawnPoint[10] = playerData.timePlayed;
+  playerData.spawnPoint[15] = playerData.branchTime;
+  id("timePlayed").innerHTML = formatTime(playerData.timePlayed);
+  id("branchTime").innerHTML = formatTime(playerData.branchTime);
   id("timer").innerHTML =
-    formatTime(player.timePlayed, false) +
+    formatTime(playerData.timePlayed, false) +
     "<br>" +
-    formatTime(player.branchTime, false);
+    formatTime(playerData.branchTime, false);
   sinceLastSave += dt;
   if (sinceLastSave >= 5000) {
     save();
@@ -262,54 +303,84 @@ function nextFrame(timeStamp) {
   lastFrame = timeStamp;
   if (dt < 100 * gameSpeed) {
     dt = dt / simReruns;
-    let xprev = player.x;
-    let yprev = player.y;
-    let lvlxprev = player.levelCoord[0];
-    let lvlyprev = player.levelCoord[1];
-    let triggersPrev = [...player.triggers];
+    let xprev1 = player1.x;
+    let yprev1 = player1.y;
+    let xprev2 = player2.x;
+    let yprev2 = player2.y;
+    let onFloor1 = false;
+    let onFloor2 = false;
+    let lvlxprev = playerData.levelCoord[0];
+    let lvlyprev = playerData.levelCoord[1];
+    let triggersPrev = [...playerData.triggers];
     let shouldDrawLevel = false;
     for (let i = 0; i < simReruns; i++) {
       // some weird fricker to do stuff
-      if (!player.isDead) {
-        player.x += (player.xv * dt) / 500;
-        player.y +=
-          (player.yv * dt) / 500 + ((player.g / 2) * dt * dt) / 500 / 500;
+      if (!playerData.isDead) {
+        player1.x += (player1.xv * dt) / 500;
+        player1.y +=
+          (player1.yv * dt) / 500 + ((player1.g / 2) * dt * dt) / 500 / 500;
+        player2.x += (player2.xv * dt) / 500;
+        player2.y +=
+          (player2.yv * dt) / 500 + ((player2.g / 2) * dt * dt) / 500 / 500;
         // velocity change
-        if (!noFriction) {
-          player.xv *= Math.pow(0.5, dt / 6);
-          if (Math.abs(player.xv) < 5) player.xv = 0;
+        if (!player1.noFriction) {
+          player1.xv *= Math.pow(0.5, dt / 6);
+          if (Math.abs(player1.xv) < 5) player1.xv = 0;
+        }
+        if (!player2.noFriction) {
+          player2.xv *= Math.pow(0.5, dt / 6);
+          if (Math.abs(player2.xv) < 5) player2.xv = 0;
         }
         if (
-          (player.yv > player.g && player.g > 0) ||
-          (player.yv < player.g && player.g < 0)
+          (player1.yv > player1.g && player1.g > 0) ||
+          (player1.yv < player1.g && player1.g < 0)
         ) {
-          player.yv -= (player.g * dt) / 500;
-          if (Math.abs(player.yv) < player.g) player.yv = player.g;
+          player1.yv -= (player1.g * dt) / 500;
+          if (Math.abs(player1.yv) < player1.g) player1.yv = player1.g;
         } else {
-          player.yv += (player.g * dt) / 500;
+          player1.yv += (player1.g * dt) / 500;
+        }
+        if (
+          (player2.yv > player2.g && player2.g > 0) ||
+          (player2.yv < player2.g && player2.g < 0)
+        ) {
+          player2.yv -= (player2.g * dt) / 500;
+          if (Math.abs(player2.yv) < player2.g) player2.yv = player2.g;
+        } else {
+          player2.yv += (player2.g * dt) / 500;
         }
       }
       // collision detection
       if (i === 0) {
-        player.canWalljump = false;
+        player1.canWalljump = false;
+        player2.canWalljump = false;
       }
-      let level = levels[player.currentLevel];
-      let onIce = false;
+      let level = levels[playerData.currentLevel];
+      let onIce1 = false;
+      let onIce2 = false;
       let shouldDie = false;
-      let bx1 = Math.floor((player.x - 0.001) / blockSize);
-      let bx2 = Math.floor((player.x + playerSize) / blockSize);
-      let by1 = Math.floor((player.y - 0.001) / blockSize);
-      let by2 = Math.floor((player.y + playerSize) / blockSize);
-      let wallLeft = false;
-      let wallRight = false;
-      let wallTop = false;
-      let wallBottom = false;
+      let bx11 = Math.floor((player1.x - 0.001) / blockSize);
+      let bx12 = Math.floor((player1.x + playerSize) / blockSize);
+      let by11 = Math.floor((player1.y - 0.001) / blockSize);
+      let by12 = Math.floor((player1.y + playerSize) / blockSize);
+      let bx21 = Math.floor((player2.x - 0.001) / blockSize);
+      let bx22 = Math.floor((player2.x + playerSize) / blockSize);
+      let by21 = Math.floor((player2.y - 0.001) / blockSize);
+      let by22 = Math.floor((player2.y + playerSize) / blockSize);
+      let wallLeft1 = false;
+      let wallRight1 = false;
+      let wallTop1 = false;
+      let wallBottom1 = false;
+      let wallLeft2 = false;
+      let wallRight2 = false;
+      let wallTop2 = false;
+      let wallBottom2 = false;
       // solid blocks
-      for (let x = bx1; x <= bx2; x++) {
-        for (let y = by1; y <= by2; y++) {
+      for (let x = bx11; x <= bx12; x++) {
+        for (let y = by11; y <= by12; y++) {
           if (
-            lvlxprev !== player.levelCoord[0] ||
-            lvlyprev !== player.levelCoord[1]
+            lvlxprev !== playerData.levelCoord[0] ||
+            lvlyprev !== playerData.levelCoord[1]
           )
             break;
           let type = getBlockType(x, y);
@@ -321,19 +392,19 @@ function nextFrame(timeStamp) {
           let onBottom = false;
           if (hasHitbox.includes(type)) {
             let dx1 = Math.abs(
-              (player.x - (x + 1) * blockSize) / Math.min(-1, player.xv)
+              (player1.x - (x + 1) * blockSize) / Math.min(-1, player1.xv)
             );
             let dx2 = Math.abs(
-              (player.x + playerSize - x * blockSize) / Math.max(1, player.xv)
+              (player1.x + playerSize - x * blockSize) / Math.max(1, player1.xv)
             );
             let dy1 = Math.abs(
-              (player.y - (y + 1) * blockSize) / Math.min(-1, player.yv)
+              (player1.y - (y + 1) * blockSize) / Math.min(-1, player1.yv)
             );
             let dy2 = Math.abs(
-              (player.y + playerSize - y * blockSize) / Math.max(1, player.yv)
+              (player1.y + playerSize - y * blockSize) / Math.max(1, player1.yv)
             );
             // top left corner
-            if (x === bx1 && y === by1) {
+            if (x === bx11 && y === by11) {
               if (dx1 < dy1 && !hasHitbox.includes(getBlockType(x + 1, y))) {
                 onLeft = true;
               } else if (!hasHitbox.includes(getBlockType(x, y + 1))) {
@@ -341,7 +412,7 @@ function nextFrame(timeStamp) {
               }
             }
             // bottom left corner
-            else if (x === bx1 && y === by2) {
+            else if (x === bx11 && y === by12) {
               if (dx1 < dy2 && !hasHitbox.includes(getBlockType(x + 1, y))) {
                 onLeft = true;
               } else if (!hasHitbox.includes(getBlockType(x, y - 1))) {
@@ -349,7 +420,7 @@ function nextFrame(timeStamp) {
               }
             }
             // top right corner
-            else if (x === bx2 && y === by1) {
+            else if (x === bx12 && y === by11) {
               if (dx2 < dy1 && !hasHitbox.includes(getBlockType(x - 1, y))) {
                 onRight = true;
               } else if (!hasHitbox.includes(getBlockType(x, y + 1))) {
@@ -357,7 +428,7 @@ function nextFrame(timeStamp) {
               }
             }
             // bottom right corner
-            else if (x === bx2 && y === by2) {
+            else if (x === bx12 && y === by12) {
               if (dx2 < dy2 && !hasHitbox.includes(getBlockType(x - 1, y))) {
                 onRight = true;
               } else if (!hasHitbox.includes(getBlockType(x, y - 1))) {
@@ -365,15 +436,15 @@ function nextFrame(timeStamp) {
               }
             }
             // bottom right corner
-            else if (x === bx2 && y === by2) {
+            else if (x === bx12 && y === by12) {
               if (
                 Math.abs(
-                  (x * blockSize - (player.x + playerSize)) /
-                    Math.max(1, Math.abs(player.xv))
+                  (x * blockSize - (player1.x + playerSize)) /
+                    Math.max(1, Math.abs(player1.xv))
                 ) <
                   Math.abs(
-                    (y * blockSize - (player.y + playerSize)) /
-                      Math.max(1, Math.abs(player.yv))
+                    (y * blockSize - (player1.y + playerSize)) /
+                      Math.max(1, Math.abs(player1.yv))
                   ) &&
                 !hasHitbox.includes(getBlockType(x - 1, y))
               ) {
@@ -383,34 +454,34 @@ function nextFrame(timeStamp) {
               }
             }
             // left bound
-            else if (x === bx1) wallLeft = true;
+            else if (x === bx11) wallLeft1 = true;
             // right bound
-            else if (x === bx2) wallRight = true;
+            else if (x === bx12) wallRight1 = true;
             // top bound
-            else if (y === by1) wallTop = true;
+            else if (y === by11) wallTop1 = true;
             // bottom bound
-            else if (y === by2) wallBottom = true;
+            else if (y === by12) wallBottom1 = true;
             // inside
             else shouldDie = true;
             // velocity check
-            if (player.xv < 0) {
+            if (player1.xv < 0) {
               onRight = false;
-            } else if (player.xv > 0) onLeft = false;
-            if (player.yv < 0) {
+            } else if (player1.xv > 0) onLeft = false;
+            if (player1.yv < 0) {
               onBottom = false;
-            } else if (player.yv > 0) onTop = false;
+            } else if (player1.yv > 0) onTop = false;
             // touching side special event
             if (onLeft) {
-              wallLeft = true;
+              wallLeft1 = true;
               switch (type) {
                 case 11:
-                  if (!player.xg) {
-                    player.canWalljump = true;
-                    player.wallJumpDir = "right";
-                    if (player.yv > player.g / 10 && player.g > 0)
-                      player.yv = player.g / 10;
-                    if (player.yv < player.g / 10 && player.g < 0)
-                      player.yv = player.g / 10;
+                  if (!player1.xg) {
+                    player1.canWalljump = true;
+                    player1.wallJumpDir = "right";
+                    if (player1.yv > player1.g / 10 && player1.g > 0)
+                      player1.yv = player1.g / 10;
+                    if (player1.yv < player1.g / 10 && player1.g < 0)
+                      player1.yv = player1.g / 10;
                   }
                   break;
                 default:
@@ -418,16 +489,16 @@ function nextFrame(timeStamp) {
               }
             }
             if (onRight) {
-              wallRight = true;
+              wallRight1 = true;
               switch (type) {
                 case 11:
-                  if (!player.xg) {
-                    player.canWalljump = true;
-                    player.wallJumpDir = "left";
-                    if (player.yv > player.g / 10 && player.g > 0)
-                      player.yv = player.g / 10;
-                    if (player.yv < player.g / 10 && player.g < 0)
-                      player.yv = player.g / 10;
+                  if (!player1.xg) {
+                    player1.canWalljump = true;
+                    player1.wallJumpDir = "left";
+                    if (player1.yv > player1.g / 10 && player1.g > 0)
+                      player1.yv = player1.g / 10;
+                    if (player1.yv < player1.g / 10 && player1.g < 0)
+                      player1.yv = player1.g / 10;
                   }
                   break;
                 default:
@@ -435,10 +506,10 @@ function nextFrame(timeStamp) {
               }
             }
             if (onTop) {
-              wallTop = true;
+              wallTop1 = true;
               switch (type) {
                 case 5:
-                  for (let j = bx1; j <= bx2; j++) {
+                  for (let j = bx11; j <= bx12; j++) {
                     let jtype = getBlockType(j, y);
                     if (
                       hasHitbox.includes(jtype) &&
@@ -446,12 +517,12 @@ function nextFrame(timeStamp) {
                       !hasHitbox.includes(getBlockType(j, y + 1))
                     )
                       break;
-                    if (j === bx2 && player.g < 0)
-                      player.yv = Math.max(275, player.yv);
+                    if (j === bx12 && player1.g < 0)
+                      player1.yv = Math.max(275, player1.yv);
                   }
                   break;
                 case 40:
-                  for (let j = bx1; j <= bx2; j++) {
+                  for (let j = bx11; j <= bx12; j++) {
                     let jtype = getBlockType(j, y);
                     if (
                       hasHitbox.includes(jtype) &&
@@ -459,7 +530,7 @@ function nextFrame(timeStamp) {
                       !hasHitbox.includes(getBlockType(j, y + 1))
                     )
                       break;
-                    if (j === bx2) onIce = true;
+                    if (j === bx2) onIce1 = true;
                   }
                   break;
                 default:
@@ -467,10 +538,10 @@ function nextFrame(timeStamp) {
               }
             }
             if (onBottom) {
-              wallBottom = true;
+              wallBottom1 = true;
               switch (type) {
                 case 5:
-                  for (let j = bx1; j <= bx2; j++) {
+                  for (let j = bx11; j <= bx12; j++) {
                     let jtype = getBlockType(j, y);
                     if (
                       hasHitbox.includes(jtype) &&
@@ -478,12 +549,12 @@ function nextFrame(timeStamp) {
                       !hasHitbox.includes(getBlockType(j, y - 1))
                     )
                       break;
-                    if (j === bx2 && player.g > 0)
-                      player.yv = Math.min(-275, player.yv);
+                    if (j === bx12 && player1.g > 0)
+                      player1.yv = Math.min(-275, player1.yv);
                   }
                   break;
                 case 40:
-                  for (let j = bx1; j <= bx2; j++) {
+                  for (let j = bx11; j <= bx12; j++) {
                     let jtype = getBlockType(j, y);
                     if (
                       hasHitbox.includes(jtype) &&
@@ -491,7 +562,203 @@ function nextFrame(timeStamp) {
                       !hasHitbox.includes(getBlockType(j, y - 1))
                     )
                       break;
-                    if (j === bx2) onIce = true;
+                    if (j === bx12) onIce1 = true;
+                  }
+                  break;
+                default:
+                  break;
+              }
+            }
+          }
+        }
+      }
+      for (let x = bx21; x <= bx22; x++) {
+        for (let y = by21; y <= by22; y++) {
+          if (
+            lvlxprev !== playerData.levelCoord[0] ||
+            lvlyprev !== playerData.levelCoord[1]
+          )
+            break;
+          let type = getBlockType(x, y);
+          let props = type;
+          if (typeof type === "object") type = type[0];
+          let onLeft = false;
+          let onRight = false;
+          let onTop = false;
+          let onBottom = false;
+          if (hasHitbox.includes(type)) {
+            let dx1 = Math.abs(
+              (player2.x - (x + 1) * blockSize) / Math.min(-1, player2.xv)
+            );
+            let dx2 = Math.abs(
+              (player2.x + playerSize - x * blockSize) / Math.max(1, player2.xv)
+            );
+            let dy1 = Math.abs(
+              (player2.y - (y + 1) * blockSize) / Math.min(-1, player2.yv)
+            );
+            let dy2 = Math.abs(
+              (player2.y + playerSize - y * blockSize) / Math.max(1, player2.yv)
+            );
+            // top left corner
+            if (x === bx21 && y === by21) {
+              if (dx1 < dy1 && !hasHitbox.includes(getBlockType(x + 1, y))) {
+                onLeft = true;
+              } else if (!hasHitbox.includes(getBlockType(x, y + 1))) {
+                onTop = true;
+              }
+            }
+            // bottom left corner
+            else if (x === bx21 && y === by22) {
+              if (dx1 < dy2 && !hasHitbox.includes(getBlockType(x + 1, y))) {
+                onLeft = true;
+              } else if (!hasHitbox.includes(getBlockType(x, y - 1))) {
+                onBottom = true;
+              }
+            }
+            // top right corner
+            else if (x === bx22 && y === by21) {
+              if (dx2 < dy1 && !hasHitbox.includes(getBlockType(x - 1, y))) {
+                onRight = true;
+              } else if (!hasHitbox.includes(getBlockType(x, y + 1))) {
+                onTop = true;
+              }
+            }
+            // bottom right corner
+            else if (x === bx22 && y === by22) {
+              if (dx2 < dy2 && !hasHitbox.includes(getBlockType(x - 1, y))) {
+                onRight = true;
+              } else if (!hasHitbox.includes(getBlockType(x, y - 1))) {
+                onBottom = true;
+              }
+            }
+            // bottom right corner
+            else if (x === bx22 && y === by22) {
+              if (
+                Math.abs(
+                  (x * blockSize - (player2.x + playerSize)) /
+                    Math.max(1, Math.abs(player2.xv))
+                ) <
+                  Math.abs(
+                    (y * blockSize - (player2.y + playerSize)) /
+                      Math.max(1, Math.abs(player2.yv))
+                  ) &&
+                !hasHitbox.includes(getBlockType(x - 1, y))
+              ) {
+                onRight = true;
+              } else if (!hasHitbox.includes(getBlockType(x, y - 1))) {
+                onBottom = true;
+              }
+            }
+            // left bound
+            else if (x === bx21) wallLeft2 = true;
+            // right bound
+            else if (x === bx22) wallRight2 = true;
+            // top bound
+            else if (y === by21) wallTop2 = true;
+            // bottom bound
+            else if (y === by22) wallBottom2 = true;
+            // inside
+            else shouldDie = true;
+            // velocity check
+            if (player2.xv < 0) {
+              onRight = false;
+            } else if (player2.xv > 0) onLeft = false;
+            if (player2.yv < 0) {
+              onBottom = false;
+            } else if (player2.yv > 0) onTop = false;
+            // touching side special event
+            if (onLeft) {
+              wallLeft2 = true;
+              switch (type) {
+                case 11:
+                  if (!player2.xg) {
+                    player2.canWalljump = true;
+                    player2.wallJumpDir = "right";
+                    if (player2.yv > player2.g / 10 && player2.g > 0)
+                      player2.yv = player2.g / 10;
+                    if (player2.yv < player2.g / 10 && player2.g < 0)
+                      player2.yv = player2.g / 10;
+                  }
+                  break;
+                default:
+                  break;
+              }
+            }
+            if (onRight) {
+              wallRight2 = true;
+              switch (type) {
+                case 11:
+                  if (!player2.xg) {
+                    player2.canWalljump = true;
+                    player2.wallJumpDir = "left";
+                    if (player2.yv > player2.g / 10 && player2.g > 0)
+                      player2.yv = player2.g / 10;
+                    if (player2.yv < player2.g / 10 && player2.g < 0)
+                      player2.yv = player2.g / 10;
+                  }
+                  break;
+                default:
+                  break;
+              }
+            }
+            if (onTop) {
+              wallTop2 = true;
+              switch (type) {
+                case 5:
+                  for (let j = bx21; j <= bx22; j++) {
+                    let jtype = getBlockType(j, y);
+                    if (
+                      hasHitbox.includes(jtype) &&
+                      jtype !== 5 &&
+                      !hasHitbox.includes(getBlockType(j, y + 1))
+                    )
+                      break;
+                    if (j === bx22 && player2.g < 0)
+                      player2.yv = Math.max(275, player2.yv);
+                  }
+                  break;
+                case 40:
+                  for (let j = bx21; j <= bx22; j++) {
+                    let jtype = getBlockType(j, y);
+                    if (
+                      hasHitbox.includes(jtype) &&
+                      jtype !== 40 &&
+                      !hasHitbox.includes(getBlockType(j, y + 1))
+                    )
+                      break;
+                    if (j === bx22) onIce2 = true;
+                  }
+                  break;
+                default:
+                  break;
+              }
+            }
+            if (onBottom) {
+              wallBottom2 = true;
+              switch (type) {
+                case 5:
+                  for (let j = bx21; j <= bx22; j++) {
+                    let jtype = getBlockType(j, y);
+                    if (
+                      hasHitbox.includes(jtype) &&
+                      jtype !== 5 &&
+                      !hasHitbox.includes(getBlockType(j, y - 1))
+                    )
+                      break;
+                    if (j === bx22 && player2.g > 0)
+                      player2.yv = Math.min(-275, player2.yv);
+                  }
+                  break;
+                case 40:
+                  for (let j = bx21; j <= bx22; j++) {
+                    let jtype = getBlockType(j, y);
+                    if (
+                      hasHitbox.includes(jtype) &&
+                      jtype !== 40 &&
+                      !hasHitbox.includes(getBlockType(j, y - 1))
+                    )
+                      break;
+                    if (j === bx22) onIce2 = true;
                   }
                   break;
                 default:
@@ -502,136 +769,163 @@ function nextFrame(timeStamp) {
         }
       }
       if (
-        lvlxprev !== player.levelCoord[0] ||
-        lvlyprev !== player.levelCoord[1]
+        lvlxprev !== playerData.levelCoord[0] ||
+        lvlyprev !== playerData.levelCoord[1]
       )
         break;
       // ice lol
-      if (onIce) {
-        noFriction = true;
-      } else noFriction = false;
+      if (onIce1) {
+        player1.noFriction = true;
+      } else player1.noFriction = false;
+      if (onIce2) {
+        player2.noFriction = true;
+      } else player2.noFriction = false;
       // collision action
-      let onFloor = false;
-      if (wallLeft) {
-        player.x = (bx1 + 1) * blockSize;
-        player.xv = Math.max(0, player.xv);
+      if (wallLeft1) {
+        player1.x = (bx11 + 1) * blockSize;
+        player1.xv = Math.max(0, player1.xv);
       }
-      if (wallRight) {
-        player.x = bx2 * blockSize - playerSize;
-        player.xv = Math.min(0, player.xv);
+      if (wallRight1) {
+        player1.x = bx12 * blockSize - playerSize;
+        player1.xv = Math.min(0, player1.xv);
       }
-      if (wallTop) {
-        player.y = (by1 + 1) * blockSize;
-        player.yv = Math.max(0, player.yv);
-        if (player.g < 0 && player.yv <= 0) onFloor = true;
+      if (wallTop1) {
+        player1.y = (by11 + 1) * blockSize;
+        player1.yv = Math.max(0, player1.yv);
+        if (player1.g < 0 && player1.yv <= 0) onFloor1 = true;
       }
-      if (wallBottom) {
-        player.y = by2 * blockSize - playerSize;
-        player.yv = Math.min(0, player.yv);
-        if (player.g > 0 && player.yv >= 0) onFloor = true;
+      if (wallBottom1) {
+        player1.y = by12 * blockSize - playerSize;
+        player1.yv = Math.min(0, player1.yv);
+        if (player1.g > 0 && player1.yv >= 0) onFloor1 = true;
+      }
+      if (wallLeft2) {
+        player2.x = (bx21 + 1) * blockSize;
+        player2.xv = Math.max(0, player2.xv);
+      }
+      if (wallRight2) {
+        player2.x = bx22 * blockSize - playerSize;
+        player2.xv = Math.min(0, player2.xv);
+      }
+      if (wallTop2) {
+        player2.y = (by21 + 1) * blockSize;
+        player2.yv = Math.max(0, player2.yv);
+        if (player2.g < 0 && player2.yv <= 0) onFloor2 = true;
+      }
+      if (wallBottom2) {
+        player2.y = by22 * blockSize - playerSize;
+        player2.yv = Math.min(0, player2.yv);
+        if (player2.g > 0 && player2.yv >= 0) onFloor2 = true;
       }
       // fully in block
       if (
-        hasHitbox.includes(getBlockType(bx1, by1)) &&
-        hasHitbox.includes(getBlockType(bx1, by2)) &&
-        hasHitbox.includes(getBlockType(bx2, by1)) &&
-        hasHitbox.includes(getBlockType(bx2, by2))
+        hasHitbox.includes(getBlockType(bx11, by11)) &&
+        hasHitbox.includes(getBlockType(bx11, by12)) &&
+        hasHitbox.includes(getBlockType(bx12, by11)) &&
+        hasHitbox.includes(getBlockType(bx12, by12))
+      )
+        shouldDie = true;
+      if (
+        hasHitbox.includes(getBlockType(bx21, by21)) &&
+        hasHitbox.includes(getBlockType(bx21, by22)) &&
+        hasHitbox.includes(getBlockType(bx22, by21)) &&
+        hasHitbox.includes(getBlockType(bx22, by22))
       )
         shouldDie = true;
       if (!shouldDie) {
-        for (let x = bx1; x <= bx2; x++) {
-          for (let y = by1; y <= by2; y++) {
+        for (let x = bx11; x <= bx12; x++) {
+          for (let y = by11; y <= by12; y++) {
             if (
-              lvlxprev !== player.levelCoord[0] ||
-              lvlyprev !== player.levelCoord[1]
+              lvlxprev !== playerData.levelCoord[0] ||
+              lvlyprev !== playerData.levelCoord[1]
             )
               break;
             let type = getBlockType(x, y);
             let props = type;
             if (typeof type === "object") type = type[0];
             if (
-              player.x < (x + 1) * blockSize - 0.01 &&
-              player.x + playerSize > x * blockSize + 0.01 &&
-              player.y < (y + 1) * blockSize - 0.01 &&
-              player.y + playerSize > y * blockSize + 0.01
+              player1.x < (x + 1) * blockSize - 0.01 &&
+              player1.x + playerSize > x * blockSize + 0.01 &&
+              player1.y < (y + 1) * blockSize - 0.01 &&
+              player1.y + playerSize > y * blockSize + 0.01
             ) {
               switch (type) {
                 // grav-dir
                 case 6:
-                  player.xg = false;
-                  if (player.g > 0) player.g = -player.g;
+                  player1.xg = false;
+                  if (player1.g > 0) player1.g = -player1.g;
                   break;
                 case 7:
-                  player.xg = false;
-                  if (player.g < 0) player.g = -player.g;
+                  player1.xg = false;
+                  if (player1.g < 0) player1.g = -player1.g;
                   break;
                 // grav magnitude
                 case 8:
-                  player.g = Math.sign(player.g) * 170;
+                  player1.g = Math.sign(player1.g) * 170;
                   break;
                 case 9:
-                  player.g = Math.sign(player.g) * 325;
+                  player1.g = Math.sign(player1.g) * 325;
                   break;
                 case 10:
-                  player.g = Math.sign(player.g) * 650;
+                  player1.g = Math.sign(player1.g) * 650;
                   break;
                 // multi-jump
                 case 12:
-                  player.maxJumps = 0;
-                  player.currentJumps = player.maxJumps;
+                  player1.maxJumps = 0;
+                  player1.currentJumps = player1.maxJumps;
                   break;
                 case 13:
-                  player.maxJumps = 1;
-                  player.currentJumps = player.maxJumps;
+                  player1.maxJumps = 1;
+                  player1.currentJumps = player1.maxJumps;
                   break;
                 case 14:
-                  player.maxJumps = 2;
-                  player.currentJumps = player.maxJumps;
+                  player1.maxJumps = 2;
+                  player1.currentJumps = player1.maxJumps;
                   break;
                 case 15:
-                  player.maxJumps = 3;
-                  player.currentJumps = player.maxJumps;
+                  player1.maxJumps = 3;
+                  player1.currentJumps = player1.maxJumps;
                   break;
                 case 16:
-                  player.maxJumps = Infinity;
-                  player.currentJumps = player.maxJumps;
+                  player1.maxJumps = Infinity;
+                  player1.currentJumps = player1.maxJumps;
                   break;
                 // checkpoint
                 case -5:
-                  if (!player.gameComplete) {
-                    player.gameComplete = true;
-                    player.finalTimePlayed = player.timePlayed;
-                    player.finalDeaths = player.deaths;
+                  if (!playerData.gameComplete) {
+                    playerData.gameComplete = true;
+                    playerData.finalTimePlayed = playerData.timePlayed;
+                    playerData.finalDeaths = playerData.deaths;
                     id("endStat").style.display = "inline";
                     id("timePlayedEnd").innerHTML = formatTime(
-                      player.finalTimePlayed
+                      playerData.finalTimePlayed
                     );
-                    id("deathCountEnd").innerHTML = player.finalDeaths;
+                    id("deathCountEnd").innerHTML = playerData.finalDeaths;
                     if (id("mainInfo").style.bottom != "0%") openInfo();
                   }
                 case 3:
                   if (!isSpawn(x, y)) {
-                    if (player.currentLevel === 8) {
+                    if (playerData.currentLevel === 8) {
                       branchInProgress = false;
-                      player.reachedHub = true;
+                      playerData.reachedHub = true;
                     }
-                    player.spawnPoint = [
+                    playerData.spawnPoint = [
                       x,
                       y,
-                      player.levelCoord[0],
-                      player.levelCoord[1],
-                      player.g,
-                      player.maxJumps,
-                      player.moveSpeed,
-                      [...player.triggers],
+                      playerData.levelCoord[0],
+                      playerData.levelCoord[1],
+                      player1.g,
+                      player1.maxJumps,
+                      player1.moveSpeed,
+                      [...playerData.triggers],
                       currentVersion,
-                      player.reachedHub,
-                      player.timePlayed,
-                      player.deaths,
-                      player.gameComplete,
-                      player.finalTimePlayed,
-                      player.finalDeaths,
-                      player.branchTime
+                      playerData.reachedHub,
+                      playerData.timePlayed,
+                      playerData.deaths,
+                      playerData.gameComplete,
+                      playerData.finalTimePlayed,
+                      playerData.finalDeaths,
+                      playerData.branchTime
                     ];
                     shouldDrawLevel = true;
                     save();
@@ -639,13 +933,13 @@ function nextFrame(timeStamp) {
                   break;
                 // speed change
                 case 21:
-                  player.moveSpeed = 300;
+                  player1.moveSpeed = 300;
                   break;
                 case 22:
-                  player.moveSpeed = 600;
+                  player1.moveSpeed = 600;
                   break;
                 case 23:
-                  player.moveSpeed = 1200;
+                  player1.moveSpeed = 1200;
                   break;
                 // death block
                 case 2:
@@ -654,74 +948,334 @@ function nextFrame(timeStamp) {
                   break;
                 // special
                 case -3:
-                  if (!player.triggers.includes(props[1]))
-                    player.triggers.push(props[1]);
+                  if (!playerData.triggers.includes(props[1]))
+                    playerData.triggers.push(props[1]);
                   if (props[1] < 0) branchInProgress = false;
                   break;
                 case -2:
-                  if (player.currentLevel === 8) {
+                  if (playerData.currentLevel === 8) {
                     branchInProgress = true;
-                    player.branchTime = 0;
+                    playerData.branchTime = 0;
                   }
                   let warpId = props[1];
-                  if (bx1 < 0) {
+                  if (bx11 < 0) {
                     // left
                     if (props[2] != undefined) {
-                      player.levelCoord[0] += props[2];
-                      player.levelCoord[1] += props[3];
-                    } else player.levelCoord[0]--;
-                    player.x =
-                      levels[player.currentLevel].length * blockSize -
+                      playerData.levelCoord[0] += props[2];
+                      playerData.levelCoord[1] += props[3];
+                    } else playerData.levelCoord[0]--;
+                    player1.x =
+                      levels[playerData.currentLevel].length * blockSize -
                       playerSize;
-                    player.y =
+                    player1.y =
                       blockSize *
-                        levels[player.currentLevel][
-                          levels[player.currentLevel].length - 1
+                        levels[playerData.currentLevel][
+                          levels[playerData.currentLevel].length - 1
                         ].findIndex((x) => x[0] == -1 && x[1] == warpId) +
-                      ((player.y + blockSize) % blockSize);
-                  } else if (bx2 >= level.length) {
+                      ((player1.y + blockSize) % blockSize);
+                    player2.x =
+                      levels[playerData.currentLevel].length * blockSize -
+                      playerSize;
+                    player2.y =
+                      blockSize *
+                        levels[playerData.currentLevel][
+                          levels[playerData.currentLevel].length - 1
+                        ].findIndex((x) => x[0] == -1 && x[1] == warpId) +
+                      ((player2.y + blockSize) % blockSize);
+                  } else if (bx12 >= level.length) {
                     // right
                     if (props[2] != undefined) {
-                      player.levelCoord[0] += props[2];
-                      player.levelCoord[1] += props[3];
-                    } else player.levelCoord[0]++;
-                    player.x = 0;
-                    player.y =
+                      playerData.levelCoord[0] += props[2];
+                      playerData.levelCoord[1] += props[3];
+                    } else playerData.levelCoord[0]++;
+                    player1.x = 0;
+                    player1.y =
                       blockSize *
-                        levels[player.currentLevel][0].findIndex(
+                        levels[playerData.currentLevel][0].findIndex(
                           (x) => x[0] == -1 && x[1] == warpId
                         ) +
-                      ((player.y + blockSize) % blockSize);
-                  } else if (by1 < 0) {
+                      ((player1.y + blockSize) % blockSize);
+                    player2.x = 0;
+                    player2.y =
+                      blockSize *
+                        levels[playerData.currentLevel][0].findIndex(
+                          (x) => x[0] == -1 && x[1] == warpId
+                        ) +
+                      ((player2.y + blockSize) % blockSize);
+                  } else if (by11 < 0) {
                     // up
                     if (props[2] != undefined) {
-                      player.levelCoord[0] += props[2];
-                      player.levelCoord[1] += props[3];
-                    } else player.levelCoord[1]++;
-                    player.y =
-                      levels[player.currentLevel][0].length * blockSize -
+                      playerData.levelCoord[0] += props[2];
+                      playerData.levelCoord[1] += props[3];
+                    } else playerData.levelCoord[1]++;
+                    player1.y =
+                      levels[playerData.currentLevel][0].length * blockSize -
                       playerSize;
-                    player.x =
+                    player1.x =
                       blockSize *
-                        levels[player.currentLevel].findIndex(
+                        levels[player1.currentLevel].findIndex(
                           (x) =>
                             x[x.length - 1][0] == -1 &&
                             x[x.length - 1][1] == warpId
                         ) +
-                      ((player.x + blockSize) % blockSize);
-                  } else if (by2 >= level[0].length) {
+                      ((player1.x + blockSize) % blockSize);
+                    player2.y =
+                      levels[playerData.currentLevel][0].length * blockSize -
+                      playerSize;
+                    player2.x =
+                      blockSize *
+                        levels[player2.currentLevel].findIndex(
+                          (x) =>
+                            x[x.length - 1][0] == -1 &&
+                            x[x.length - 1][1] == warpId
+                        ) +
+                      ((player2.x + blockSize) % blockSize);
+                  } else if (by12 >= level[0].length) {
                     // down
                     if (props[2] != undefined) {
-                      player.levelCoord[0] += props[2];
-                      player.levelCoord[1] += props[3];
-                    } else player.levelCoord[1]--;
-                    player.y = 0;
-                    player.x =
+                      playerData.levelCoord[0] += props[2];
+                      playerData.levelCoord[1] += props[3];
+                    } else playerData.levelCoord[1]--;
+                    player1.y = 0;
+                    player1.x =
                       blockSize *
-                        levels[player.currentLevel].findIndex(
+                        levels[playerData.currentLevel].findIndex(
                           (x) => x[0][0] == -1 && x[0][1] == warpId
                         ) +
-                      ((player.x + blockSize) % blockSize);
+                      ((player1.x + blockSize) % blockSize);
+                    player2.y = 0;
+                    player2.x =
+                      blockSize *
+                        levels[playerData.currentLevel].findIndex(
+                          (x) => x[0][0] == -1 && x[0][1] == warpId
+                        ) +
+                      ((player2.x + blockSize) % blockSize);
+                  }
+                  updateAudio();
+                  break;
+                default:
+                  break;
+              }
+            }
+          }
+        }
+        for (let x = bx21; x <= bx22; x++) {
+          for (let y = by21; y <= by22; y++) {
+            if (
+              lvlxprev !== playerData.levelCoord[0] ||
+              lvlyprev !== playerData.levelCoord[1]
+            )
+              break;
+            let type = getBlockType(x, y);
+            let props = type;
+            if (typeof type === "object") type = type[0];
+            if (
+              player2.x < (x + 1) * blockSize - 0.01 &&
+              player2.x + playerSize > x * blockSize + 0.01 &&
+              player2.y < (y + 1) * blockSize - 0.01 &&
+              player2.y + playerSize > y * blockSize + 0.01
+            ) {
+              switch (type) {
+                // grav-dir
+                case 6:
+                  player2.xg = false;
+                  if (player2.g > 0) player2.g = -player2.g;
+                  break;
+                case 7:
+                  player2.xg = false;
+                  if (player2.g < 0) player2.g = -player2.g;
+                  break;
+                // grav magnitude
+                case 8:
+                  player2.g = Math.sign(player2.g) * 170;
+                  break;
+                case 9:
+                  player2.g = Math.sign(player2.g) * 325;
+                  break;
+                case 10:
+                  player2.g = Math.sign(player2.g) * 650;
+                  break;
+                // multi-jump
+                case 12:
+                  player2.maxJumps = 0;
+                  player2.currentJumps = player2.maxJumps;
+                  break;
+                case 13:
+                  player2.maxJumps = 1;
+                  player2.currentJumps = player2.maxJumps;
+                  break;
+                case 14:
+                  player2.maxJumps = 2;
+                  player2.currentJumps = player2.maxJumps;
+                  break;
+                case 15:
+                  player2.maxJumps = 3;
+                  player2.currentJumps = player2.maxJumps;
+                  break;
+                case 16:
+                  player2.maxJumps = Infinity;
+                  player2.currentJumps = player2.maxJumps;
+                  break;
+                // checkpoint
+                case -5:
+                  if (!playerData.gameComplete) {
+                    playerData.gameComplete = true;
+                    playerData.finalTimePlayed = playerData.timePlayed;
+                    playerData.finalDeaths = playerData.deaths;
+                    id("endStat").style.display = "inline";
+                    id("timePlayedEnd").innerHTML = formatTime(
+                      playerData.finalTimePlayed
+                    );
+                    id("deathCountEnd").innerHTML = playerData.finalDeaths;
+                    if (id("mainInfo").style.bottom != "0%") openInfo();
+                  }
+                case 3:
+                  if (!isSpawn(x, y)) {
+                    if (playerData.currentLevel === 8) {
+                      branchInProgress = false;
+                      playerData.reachedHub = true;
+                    }
+                    playerData.spawnPoint = [
+                      x,
+                      y,
+                      playerData.levelCoord[0],
+                      playerData.levelCoord[1],
+                      player2.g,
+                      player2.maxJumps,
+                      player2.moveSpeed,
+                      [...playerData.triggers],
+                      currentVersion,
+                      playerData.reachedHub,
+                      playerData.timePlayed,
+                      playerData.deaths,
+                      playerData.gameComplete,
+                      playerData.finalTimePlayed,
+                      playerData.finalDeaths,
+                      playerData.branchTime
+                    ];
+                    shouldDrawLevel = true;
+                    save();
+                  }
+                  break;
+                // speed change
+                case 21:
+                  player1.moveSpeed = 300;
+                  break;
+                case 22:
+                  player1.moveSpeed = 600;
+                  break;
+                case 23:
+                  player1.moveSpeed = 1200;
+                  break;
+                // death block
+                case 2:
+                case -4:
+                  shouldDie = true;
+                  break;
+                // special
+                case -3:
+                  if (!playerData.triggers.includes(props[1]))
+                    playerData.triggers.push(props[1]);
+                  if (props[1] < 0) branchInProgress = false;
+                  break;
+                case -2:
+                  if (playerData.currentLevel === 8) {
+                    branchInProgress = true;
+                    playerData.branchTime = 0;
+                  }
+                  let warpId = props[1];
+                  if (bx21 < 0) {
+                    // left
+                    if (props[2] != undefined) {
+                      playerData.levelCoord[0] += props[2];
+                      playerData.levelCoord[1] += props[3];
+                    } else playerData.levelCoord[0]--;
+                    player1.x =
+                      levels[playerData.currentLevel].length * blockSize -
+                      playerSize;
+                    player1.y =
+                      blockSize *
+                        levels[playerData.currentLevel][
+                          levels[playerData.currentLevel].length - 1
+                        ].findIndex((x) => x[0] == -1 && x[1] == warpId) +
+                      ((player1.y + blockSize) % blockSize);
+                    player2.x =
+                      levels[playerData.currentLevel].length * blockSize -
+                      playerSize;
+                    player2.y =
+                      blockSize *
+                        levels[playerData.currentLevel][
+                          levels[playerData.currentLevel].length - 1
+                        ].findIndex((x) => x[0] == -1 && x[1] == warpId) +
+                      ((player2.y + blockSize) % blockSize);
+                  } else if (bx22 >= level.length) {
+                    // right
+                    if (props[2] != undefined) {
+                      playerData.levelCoord[0] += props[2];
+                      playerData.levelCoord[1] += props[3];
+                    } else playerData.levelCoord[0]++;
+                    player1.x = 0;
+                    player1.y =
+                      blockSize *
+                        levels[playerData.currentLevel][0].findIndex(
+                          (x) => x[0] == -1 && x[1] == warpId
+                        ) +
+                      ((player1.y + blockSize) % blockSize);
+                    player2.x = 0;
+                    player2.y =
+                      blockSize *
+                        levels[playerData.currentLevel][0].findIndex(
+                          (x) => x[0] == -1 && x[1] == warpId
+                        ) +
+                      ((player2.y + blockSize) % blockSize);
+                  } else if (by21 < 0) {
+                    // up
+                    if (props[2] != undefined) {
+                      playerData.levelCoord[0] += props[2];
+                      playerData.levelCoord[1] += props[3];
+                    } else playerData.levelCoord[1]++;
+                    player1.y =
+                      levels[playerData.currentLevel][0].length * blockSize -
+                      playerSize;
+                    player1.x =
+                      blockSize *
+                        levels[playerData.currentLevel].findIndex(
+                          (x) =>
+                            x[x.length - 1][0] == -1 &&
+                            x[x.length - 1][1] == warpId
+                        ) +
+                      ((player1.x + blockSize) % blockSize);
+                    player2.y =
+                      levels[playerData.currentLevel][0].length * blockSize -
+                      playerSize;
+                    player2.x =
+                      blockSize *
+                        levels[playerData.currentLevel].findIndex(
+                          (x) =>
+                            x[x.length - 1][0] == -1 &&
+                            x[x.length - 1][1] == warpId
+                        ) +
+                      ((player2.x + blockSize) % blockSize);
+                  } else if (by22 >= level[0].length) {
+                    // down
+                    if (props[2] != undefined) {
+                      playerData.levelCoord[0] += props[2];
+                      playerData.levelCoord[1] += props[3];
+                    } else playerData.levelCoord[1]--;
+                    player1.y = 0;
+                    player1.x =
+                      blockSize *
+                        levels[playerData.currentLevel].findIndex(
+                          (x) => x[0][0] == -1 && x[0][1] == warpId
+                        ) +
+                      ((player1.x + blockSize) % blockSize);
+                    player2.y = 0;
+                    player2.x =
+                      blockSize *
+                        levels[playerData.currentLevel].findIndex(
+                          (x) => x[0][0] == -1 && x[0][1] == warpId
+                        ) +
+                      ((player2.x + blockSize) % blockSize);
                   }
                   updateAudio();
                   break;
@@ -732,17 +1286,20 @@ function nextFrame(timeStamp) {
           }
         }
       }
-      if (onFloor) {
-        player.currentJumps = player.maxJumps;
-      } else if (player.currentJumps === player.maxJumps) player.currentJumps--;
+      if (onFloor1) {
+        player1.currentJumps = player1.maxJumps;
+      } else if (player1.currentJumps === player1.maxJumps) player1.currentJumps--;
+      if (onFloor2) {
+        player2.currentJumps = player2.maxJumps;
+      } else if (player2.currentJumps === player2.maxJumps) player2.currentJumps--;
       // die
-      if (!player.godMode && shouldDie && !player.isDead) player.isDead = true;
-      if (player.isDead) {
-        player.spawnTimer -= dt;
-        if (player.spawnTimer <= 0) respawn();
+      if (!playerData.godMode && shouldDie && !playerData.isDead) playerData.isDead = true;
+      if (playerData.isDead) {
+        playerData.spawnTimer -= dt;
+        if (playerData.spawnTimer <= 0) respawn();
       }
       // triggers
-      if (!player.triggers.includes(-1)) {
+      if (!playerData.triggers.includes(-1)) {
         levels[9][5][5] = 0;
         levels[9][5][4] = 0;
         levels[9][5][2] = 0;
@@ -759,7 +1316,7 @@ function nextFrame(timeStamp) {
         levels[9][10][1] = 6;
         levels[9][13][1] = 7;
       }
-      if (!player.triggers.includes(-2)) {
+      if (!playerData.triggers.includes(-2)) {
         levels[9][7][5] = 0;
         levels[9][7][4] = 0;
         levels[9][7][2] = 0;
@@ -770,7 +1327,7 @@ function nextFrame(timeStamp) {
         levels[9][7][2] = 16;
         levels[9][7][1] = 13;
       }
-      if (!player.triggers.includes(-3)) {
+      if (!playerData.triggers.includes(-3)) {
         levels[9][10][2] = 1;
         levels[9][10][3] = 1;
         levels[9][10][5] = 1;
@@ -779,7 +1336,7 @@ function nextFrame(timeStamp) {
         levels[9][10][3] = 11;
         levels[9][10][5] = 11;
       }
-      if (!player.triggers.includes(-4)) {
+      if (!playerData.triggers.includes(-4)) {
         levels[9][11][1] = 0;
         levels[9][11][5] = 0;
         levels[9][13][5] = 0;
@@ -788,181 +1345,181 @@ function nextFrame(timeStamp) {
         levels[9][11][5] = 23;
         levels[9][13][5] = 22;
       }
-      if (player.triggers.includes(0)) {
+      if (playerData.triggers.includes(0)) {
         levels[22][6][4] = 0;
       } else levels[22][6][4] = -4;
-      if (player.triggers.includes(1)) {
+      if (playerData.triggers.includes(1)) {
         levels[22][6][5] = 0;
       } else levels[22][6][5] = -4;
-      if (player.triggers.includes(2)) {
+      if (playerData.triggers.includes(2)) {
         levels[26][27][1] = 0;
         levels[26][27][2] = 0;
       } else {
         levels[26][27][1] = -4;
         levels[26][27][2] = -4;
       }
-      if (player.triggers.includes(3)) {
+      if (playerData.triggers.includes(3)) {
         levels[26][28][1] = 0;
         levels[26][28][2] = 0;
       } else {
         levels[26][28][1] = -4;
         levels[26][28][2] = -4;
       }
-      if (player.triggers.includes(4)) {
+      if (playerData.triggers.includes(4)) {
         levels[26][29][1] = 0;
         levels[26][29][2] = 0;
       } else {
         levels[26][29][1] = -4;
         levels[26][29][2] = -4;
       }
-      if (player.triggers.includes(5)) {
+      if (playerData.triggers.includes(5)) {
         levels[26][31][11] = 0;
         levels[26][31][12] = 0;
       } else {
         levels[26][31][11] = -4;
         levels[26][31][12] = -4;
       }
-      if (player.triggers.includes(6)) {
+      if (playerData.triggers.includes(6)) {
         levels[26][32][11] = 0;
         levels[26][32][12] = 0;
       } else {
         levels[26][32][11] = -4;
         levels[26][32][12] = -4;
       }
-      if (player.triggers.includes(7)) {
+      if (playerData.triggers.includes(7)) {
         levels[26][33][11] = 0;
         levels[26][33][12] = 0;
       } else {
         levels[26][33][11] = -4;
         levels[26][33][12] = -4;
       }
-      if (player.triggers.includes(8)) {
+      if (playerData.triggers.includes(8)) {
         levels[26][38][1] = 0;
       } else levels[26][38][1] = -4;
-      if (player.triggers.includes(9)) {
+      if (playerData.triggers.includes(9)) {
         levels[26][39][1] = 0;
       } else levels[26][39][1] = -4;
-      if (player.triggers.includes(10)) {
+      if (playerData.triggers.includes(10)) {
         levels[32][15][3] = 0;
       } else levels[32][15][3] = -4;
-      if (player.triggers.includes(11)) {
+      if (playerData.triggers.includes(11)) {
         levels[32][9][1] = 0;
       } else levels[32][9][1] = -4;
-      if (player.triggers.includes(12)) {
+      if (playerData.triggers.includes(12)) {
         levels[32][7][3] = 0;
       } else levels[32][7][3] = -4;
-      if (player.triggers.includes(13)) {
+      if (playerData.triggers.includes(13)) {
         levels[32][3][3] = 0;
       } else levels[32][3][3] = -4;
-      if (player.triggers.includes(14)) {
+      if (playerData.triggers.includes(14)) {
         levels[32][1][4] = 0;
       } else levels[32][1][4] = -4;
-      if (player.triggers.includes(15)) {
+      if (playerData.triggers.includes(15)) {
         levels[35][15][4] = 0;
         levels[35][15][5] = 0;
       } else {
         levels[35][15][4] = -4;
         levels[35][15][5] = -4;
       }
-      if (player.triggers.includes(16)) {
+      if (playerData.triggers.includes(16)) {
         levels[42][12][9] = 0;
       } else levels[42][12][9] = -4;
-      if (player.triggers.includes(17)) {
+      if (playerData.triggers.includes(17)) {
         levels[42][1][1] = 0;
       } else levels[42][1][1] = -4;
-      if (player.triggers.includes(18)) {
+      if (playerData.triggers.includes(18)) {
         levels[43][10][6] = 0;
       } else levels[43][10][6] = -4;
-      if (player.triggers.includes(19)) {
+      if (playerData.triggers.includes(19)) {
         levels[43][5][9] = 0;
       } else levels[43][5][9] = -4;
-      if (player.triggers.includes(20)) {
+      if (playerData.triggers.includes(20)) {
         levels[43][7][10] = 0;
         if (diff === "-HARD") levels[43][6][9] = -4;
       } else {
         levels[43][7][10] = -4;
         if (diff === "-HARD") levels[43][6][9] = 0;
       }
-      if (player.triggers.includes(21)) {
+      if (playerData.triggers.includes(21)) {
         levels[43][6][12] = 0;
       } else levels[43][6][12] = -4;
-      if (player.triggers.includes(22)) {
+      if (playerData.triggers.includes(22)) {
         levels[52][1][2] = 0;
       } else levels[52][1][2] = -4;
-      if (player.triggers.includes(23)) {
+      if (playerData.triggers.includes(23)) {
         levels[63][27][5] = 0;
       } else levels[63][27][5] = -4;
-      if (player.triggers.includes(24)) {
+      if (playerData.triggers.includes(24)) {
         levels[63][27][2] = 0;
       } else levels[63][27][2] = -4;
-      if (player.triggers.includes(25)) {
+      if (playerData.triggers.includes(25)) {
         levels[63][25][5] = 0;
       } else levels[63][25][5] = -4;
-      if (player.triggers.includes(26)) {
+      if (playerData.triggers.includes(26)) {
         levels[63][25][8] = 0;
       } else levels[63][25][8] = -4;
-      if (player.triggers.includes(27)) {
+      if (playerData.triggers.includes(27)) {
         levels[73][13][4] = 0;
       } else levels[73][13][4] = -4;
-      if (player.triggers.includes(28)) {
+      if (playerData.triggers.includes(28)) {
         levels[73][13][3] = 0;
       } else levels[73][13][3] = -4;
-      if (player.triggers.includes(29)) {
+      if (playerData.triggers.includes(29)) {
         levels[74][4][8] = 0;
         levels[74][4][9] = 0;
       } else {
         levels[74][4][8] = -4;
         levels[74][4][9] = -4;
       }
-      if (player.triggers.includes(30)) {
+      if (playerData.triggers.includes(30)) {
         levels[74][6][4] = 0;
       } else levels[74][6][4] = -4;
-      if (player.triggers.includes(31)) {
+      if (playerData.triggers.includes(31)) {
         levels[74][5][20] = 0;
       } else levels[74][5][20] = -4;
-      if (player.triggers.includes(32)) {
+      if (playerData.triggers.includes(32)) {
         levels[75][5][4] = 0;
       } else levels[75][5][4] = -4;
-      if (player.triggers.includes(33)) {
+      if (playerData.triggers.includes(33)) {
         levels[75][5][2] = 0;
       } else levels[75][5][2] = -4;
-      if (player.triggers.includes(34)) {
+      if (playerData.triggers.includes(34)) {
         levels[75][7][10] = 0;
       } else levels[75][7][10] = -4;
-      if (player.triggers.includes(35)) {
+      if (playerData.triggers.includes(35)) {
         levels[85][16][11] = 0;
       } else levels[85][16][11] = -4;
-      if (player.triggers.includes(36)) {
+      if (playerData.triggers.includes(36)) {
         levels[85][18][11] = 0;
       } else levels[85][18][11] = -4;
-      if (player.triggers.includes(37)) {
+      if (playerData.triggers.includes(37)) {
         levels[85][19][3] = 0;
       } else levels[85][19][3] = -4;
-      if (player.triggers.includes(38)) {
+      if (playerData.triggers.includes(38)) {
         levels[85][19][1] = 0;
       } else levels[85][19][1] = -4;
-      if (player.triggers.includes(39)) {
+      if (playerData.triggers.includes(39)) {
         levels[87][16][11] = 0;
         levels[87][16][12] = 0;
       } else {
         levels[87][16][11] = -4;
         levels[87][16][12] = -4;
       }
-      if (player.triggers.includes(40)) {
+      if (playerData.triggers.includes(40)) {
         levels[87][18][11] = 0;
         levels[87][18][12] = 0;
       } else {
         levels[87][18][11] = -4;
         levels[87][18][12] = -4;
       }
-      if (player.triggers.includes(41)) {
+      if (playerData.triggers.includes(41)) {
         levels[87][20][11] = 0;
         levels[87][20][12] = 0;
       } else {
         levels[87][20][11] = -4;
         levels[87][20][12] = -4;
       }
-      if (player.triggers.includes(42)) {
+      if (playerData.triggers.includes(42)) {
         levels[87][22][11] = 0;
         levels[87][22][12] = 0;
       } else {
@@ -972,49 +1529,98 @@ function nextFrame(timeStamp) {
     }
     dt = dt * simReruns;
     // key input
-    if (control.left && player.xv > -player.moveSpeed) {
-      player.xv -= (player.moveSpeed * dt) / 50 / (noFriction ? 6 : 1);
-      if (player.xv < -player.moveSpeed / (noFriction ? 6 : 1))
-        player.xv = -player.moveSpeed / (noFriction ? 6 : 1);
+    if (control.left1 && player1.xv > -player1.moveSpeed) {
+      player1.xv -= (player1.moveSpeed * dt) / 50 / (player1.noFriction ? 6 : 1);
+      if (player1.xv < -player1.moveSpeed / (player1.noFriction ? 6 : 1))
+        player1.xv = -player1.moveSpeed / (player1.noFriction ? 6 : 1);
     }
-    if (control.right && player.xv < player.moveSpeed) {
-      player.xv += (player.moveSpeed * dt) / 50 / (noFriction ? 6 : 1);
-      if (player.xv > player.moveSpeed / (noFriction ? 6 : 1))
-        player.xv = player.moveSpeed / (noFriction ? 6 : 1);
+    if (control.right1 && player1.xv < player1.moveSpeed) {
+      player1.xv += (player1.moveSpeed * dt) / 50 / (player1.noFriction ? 6 : 1);
+      if (player1.xv > player1.moveSpeed / (player1.noFriction ? 6 : 1))
+        player1.xv = player1.moveSpeed / (player1.noFriction ? 6 : 1);
     }
-    if (control.up || control.down || control.space) {
-      if (player.canWalljump) {
-        if (player.wallJumpDir === "left" && control.left) {
-          player.canJump = false;
-          player.xv = -600;
-          player.yv = -Math.sign(player.g) * 205;
+    if (control.up1 || control.down1 || control.space1) {
+      if (player1.canWalljump) {
+        if (player1.wallJumpDir === "left" && control.left1) {
+          player1.canJump = false;
+          player1.xv = -600;
+          player1.yv = -Math.sign(player1.g) * 205;
         }
-        if (player.wallJumpDir === "right" && control.right) {
-          player.canJump = false;
-          player.xv = 600;
-          player.yv = -Math.sign(player.g) * 205;
+        if (player1.wallJumpDir === "right" && control.right1) {
+          player1.canJump = false;
+          player1.xv = 600;
+          player1.yv = -Math.sign(player1.g) * 205;
         }
       } else if (
-        player.canJump &&
-        (player.currentJumps > 0 || player.godMode)
+        player1.canJump &&
+        (player1.currentJumps > 0 || playerData.godMode)
       ) {
-        player.canJump = false;
-        player.yv = -Math.sign(player.g) * 205;
-        player.currentJumps--;
+        player1.canJump = false;
+        player1.yv = -Math.sign(player1.g) * 205;
+        player1.currentJumps--;
       }
     }
+    if (control.left2 && player2.xv > -player2.moveSpeed) {
+      player2.xv -= (player2.moveSpeed * dt) / 50 / (player2.noFriction ? 6 : 1);
+      if (player2.xv < -player2.moveSpeed / (player2.noFriction ? 6 : 1))
+        player2.xv = -player2.moveSpeed / (player2.noFriction ? 6 : 1);
+    }
+    if (control.right2 && player2.xv < player2.moveSpeed) {
+      player2.xv += (player2.moveSpeed * dt) / 50 / (player2.noFriction ? 6 : 1);
+      if (player2.xv > player2.moveSpeed / (player2.noFriction ? 6 : 1))
+        player2.xv = player2.moveSpeed / (player2.noFriction ? 6 : 1);
+    }
+    if (control.up2 || control.down2) {
+      if (player2.canWalljump) {
+        if (player2.wallJumpDir === "left" && control.left2) {
+          player2.canJump = false;
+          player2.xv = -600;
+          player2.yv = -Math.sign(player2.g) * 205;
+        }
+        if (player2.wallJumpDir === "right" && control.right2) {
+          player2.canJump = false;
+          player2.xv = 600;
+          player2.yv = -Math.sign(player2.g) * 205;
+        }
+      } else if (
+        player2.canJump &&
+        (player2.currentJumps > 0 || playerData.godMode)
+      ) {
+        player2.canJump = false;
+        player2.yv = -Math.sign(player2.g) * 205;
+        player2.currentJumps--;
+      }
+    }
+    // rope physics
+    let ropex = player1.x - player2.x;
+    let ropey = player1.y - player2.y;
+    if (onFloor1) {
+      player1.x -= Math.max(ropex - player1.g / 2, 0) / 100;
+      player1.y += Math.max(ropey - player1.g / 2, 0) / 100;
+    } else {
+      player1.x -= ropex / 100;
+      player1.y -= ropey / 100;
+    }
+    if (onFloor2) {
+      player2.x += Math.max(ropex - player2.g / 2, 0) / 100;
+      player2.y += Math.max(ropey - player2.g / 2, 0) / 100;
+    } else {
+      player2.x += ropex / 100;
+      player2.y += ropey / 100;
+    }
     // draw checks
-    if (player.x != xprev || player.y != yprev) drawPlayer();
+    if (player1.x != xprev1 || player1.y != yprev1) drawPlayers();
+    if (player2.x != xprev2 || player2.y != yprev2) drawPlayers();
     if (
-      player.levelCoord[0] !== lvlxprev ||
-      player.levelCoord[1] !== lvlyprev ||
-      !arraysEqual(player.triggers, triggersPrev) ||
+      playerData.levelCoord[0] !== lvlxprev ||
+      playerData.levelCoord[1] !== lvlyprev ||
+      !arraysEqual(playerData.triggers, triggersPrev) ||
       shouldDrawLevel
     )
       drawLevel();
     if (camx !== lvlx || camy !== lvly)
       adjustScreen(
-        player.levelCoord[0] !== lvlxprev || player.levelCoord[1] !== lvlyprev
+        playerData.levelCoord[0] !== lvlxprev || playerData.levelCoord[1] !== lvlyprev
       );
   }
   window.requestAnimationFrame(nextFrame);
@@ -1050,7 +1656,7 @@ function newSave() {
   ];
 }
 function save() {
-  let saveData = deepCopy(player.spawnPoint);
+  let saveData = deepCopy(playerData.spawnPoint);
   if (saveData[5] == Infinity) saveData[5] = "Infinity";
   localStorage.setItem("just-a-save" + diff, JSON.stringify(saveData));
 }
@@ -1062,19 +1668,19 @@ function load() {
       saveData[8] = newSave()[8];
       saveData[3] += 3;
     }
-    player.spawnPoint = saveData;
-    player.timePlayed = player.spawnPoint[10] ?? 0;
-    player.deaths = player.spawnPoint[11] ?? 0;
-    player.gameComplete = player.spawnPoint[12] ?? false;
-    player.finalTimePlayed = player.spawnPoint[13] ?? 0;
-    player.finalDeaths = player.spawnPoint[14] ?? 0;
-    player.branchTime = player.spawnPoint[15] ?? 0;
-    id("timePlayed").innerHTML = formatTime(player.timePlayed);
-    id("deathCount").innerHTML = player.deaths;
-    if (player.gameComplete) {
+    playerData.spawnPoint = saveData;
+    playerData.timePlayed = playerData.spawnPoint[10] ?? 0;
+    playerData.deaths = playerData.spawnPoint[11] ?? 0;
+    playerData.gameComplete = playerData.spawnPoint[12] ?? false;
+    playerData.finalTimePlayed = playerData.spawnPoint[13] ?? 0;
+    playerData.finalDeaths = playerData.spawnPoint[14] ?? 0;
+    playerData.branchTime = playerData.spawnPoint[15] ?? 0;
+    id("timePlayed").innerHTML = formatTime(playerData.timePlayed);
+    id("deathCount").innerHTML = playerData.deaths;
+    if (playerData.gameComplete) {
       id("endStat").style.display = "inline";
-      id("timePlayedEnd").innerHTML = formatTime(player.finalTimePlayed);
-      id("deathCountEnd").innerHTML = player.finalDeaths;
+      id("timePlayedEnd").innerHTML = formatTime(playerData.finalTimePlayed);
+      id("deathCountEnd").innerHTML = playerData.finalDeaths;
     }
     save();
   }
@@ -1084,13 +1690,13 @@ function wipeSave() {
     !options.wipeConfirm ||
     confirm("Are you sure you want to delete your save?")
   ) {
-    player.spawnPoint = newSave();
+    playerData.spawnPoint = newSave();
     save();
     load();
     respawn(false);
     branchInProgress = true;
     drawLevel();
-    drawPlayer();
+    drawPlayers();
     adjustScreen(true);
     control.madeFirstInput = false;
   }
@@ -1119,41 +1725,49 @@ function importSave() {
 }
 function isSpawn(x, y) {
   return (
-    player.spawnPoint[2] == player.levelCoord[0] &&
-    player.spawnPoint[3] == player.levelCoord[1] &&
-    player.spawnPoint[0] == x &&
-    player.spawnPoint[1] == y
+    playerData.spawnPoint[2] == playerData.levelCoord[0] &&
+    playerData.spawnPoint[3] == playerData.levelCoord[1] &&
+    playerData.spawnPoint[0] == x &&
+    playerData.spawnPoint[1] == y
   );
 }
 function respawn(death = true) {
   if (death) {
-    player.deaths++;
-    player.spawnPoint[11] = player.deaths;
-    id("deathCount").innerHTML = player.deaths;
+    playerData.deaths++;
+    playerData.spawnPoint[11] = playerData.deaths;
+    id("deathCount").innerHTML = playerData.deaths;
     save();
   }
-  player.spawnTimer = player.spawnDelay;
-  player.isDead = false;
-  player.levelCoord = [player.spawnPoint[2], player.spawnPoint[3]];
-  player.xv = 0;
-  player.yv = 0;
-  player.g = player.spawnPoint[4];
-  player.maxJumps = player.spawnPoint[5];
-  player.currentJumps = player.maxJumps;
-  player.moveSpeed = player.spawnPoint[6];
-  player.triggers = [...player.spawnPoint[7]];
-  player.reachedHub = player.spawnPoint[9];
-  let spawnx = player.spawnPoint[0] * blockSize + (blockSize - playerSize) / 2;
-  let spawny = player.spawnPoint[1] * blockSize;
-  if (player.g > 0) spawny += blockSize - playerSize;
-  player.x = spawnx;
-  player.y = spawny;
+  playerData.spawnTimer = playerData.spawnDelay;
+  playerData.isDead = false;
+  playerData.levelCoord = [playerData.spawnPoint[2], playerData.spawnPoint[3]];
+  player1.xv = 0;
+  player1.yv = 0;
+  player1.g = playerData.spawnPoint[4];
+  player1.maxJumps = playerData.spawnPoint[5];
+  player1.currentJumps = player1.maxJumps;
+  player1.moveSpeed = playerData.spawnPoint[6];
+  player2.xv = 0;
+  player2.yv = 0;
+  player2.g = playerData.spawnPoint[4];
+  player2.maxJumps = playerData.spawnPoint[5];
+  player2.currentJumps = player2.maxJumps;
+  player2.moveSpeed = playerData.spawnPoint[6];
+  playerData.triggers = [...playerData.spawnPoint[7]];
+  playerData.reachedHub = playerData.spawnPoint[9];
+  let spawnx = playerData.spawnPoint[0] * blockSize + (blockSize - playerSize) / 2;
+  let spawny = playerData.spawnPoint[1] * blockSize;
+  if (player1.g > 0) spawny += blockSize - playerSize;
+  player1.x = spawnx;
+  player1.y = spawny;
+  player2.x = spawnx;
+  player2.y = spawny;
   drawLevel();
-  drawPlayer();
+  drawPlayers();
   if (audioInitDone) updateAudio();
 }
 function getBlockType(x, y) {
-  let level = levels[player.currentLevel];
+  let level = levels[playerData.currentLevel];
   if (x < 0 || x >= level.length || y < 0 || y >= level[0].length) {
     if (level[x - 1] != undefined) {
       if (typeof level[x - 1][y] == "object") {
